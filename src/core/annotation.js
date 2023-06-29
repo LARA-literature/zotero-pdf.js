@@ -681,6 +681,7 @@ class Annotation {
       noRotate: !!(this.flags & AnnotationFlag.NOROTATE),
       noHTML: isLocked && isContentLocked,
       isEditable: false,
+      isZotero: (dict.get("NM") || '').startsWith('Zotero-') || dict.get("Zotero:Key"),
     };
 
     if (params.collectFields) {

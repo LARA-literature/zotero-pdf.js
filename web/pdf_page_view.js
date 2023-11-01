@@ -1034,6 +1034,7 @@ class PDFPageView {
         this.#hasRestrictedScaling = false;
       }
     }
+    this.currentCanvasWidth = width * outputScale.sx;
     const sfx = approximateFraction(outputScale.sx);
     const sfy = approximateFraction(outputScale.sy);
 

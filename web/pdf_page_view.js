@@ -1055,7 +1055,7 @@ class PDFPageView {
       canvasContext: ctx,
       transform,
       viewport,
-      annotationMode: AnnotationMode.ENABLE_FORMS,
+      annotationMode: AnnotationMode.ENABLE_STORAGE,
       optionalContentConfigPromise: this._optionalContentConfigPromise,
       // annotationCanvasMap: this._annotationCanvasMap,
       pageColors,

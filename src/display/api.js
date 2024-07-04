@@ -953,6 +953,10 @@ class PDFDocumentProxy {
     return this._transport.messageHandler.sendWithPromise("GetProcessedData", data);
   }
 
+  getPageLabels2(data) {
+    return this._transport.messageHandler.sendWithPromise("GetPageLabels2", data);
+  }
+
   getOutline2(data) {
     return this._transport.messageHandler.sendWithPromise("GetOutline2", data);
   }

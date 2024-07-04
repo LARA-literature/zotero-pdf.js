@@ -172,6 +172,16 @@ export class Module {
   }
 
   async getPageLabels() {
-    return getPageLabels(this._pdfDocument, this._structuredCharsProvider);
+    if (this._pageLabelsPromise) {
+      await this._pageLabelsPromise;
+      return this._pageLabels;
+    }
+    let resolvePageLabelsPromise;
+    this._pageLabelsPromise = new Promise((resolve) => {
+      resolvePageLabelsPromise = resolve;
+    });
+    this._pageLabels = await getPageLabels(this._pdfDocument, this._structuredCharsProvider);
+    resolvePageLabelsPromise();
+    return this._pageLabels;
   }
 }

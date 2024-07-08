@@ -311,6 +311,7 @@ export function predictPageLabels(extractedPageLabels, catalogPageLabels, pagesC
     && (
       allPageLabels[0] && catalogPageLabels[allPageLabels[0].pageIndex] === allPageLabels[0].chars.map(x => x.u).join('')
       || allPageLabels.length === 0
+      || allPageLabels.length > 1
     )
   ) {
     for (let i = 0; i < pagesCount; i++) {

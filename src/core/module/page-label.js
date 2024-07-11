@@ -293,57 +293,89 @@ function arabicToRoman(num) {
 export function predictPageLabels(extractedPageLabels, catalogPageLabels, pagesCount) {
   let pageLabels = [];
 
-  if (!catalogPageLabels && Object.values(extractedPageLabels).length < 2) {
-    for (let i = 0; i < pagesCount; i++) {
-      pageLabels[i] = (i + 1).toString();
+  let hasRoman = false;
+  let hasArabic = false;
+  let numCatalogValidatedPageLabels = 0;
+
+  if (extractedPageLabels) {
+    hasRoman = !!extractedPageLabels.find(x => x.type === 'roman');
+    hasArabic = !!extractedPageLabels.find(x => x.type === 'arabic');
+    if (catalogPageLabels) {
+      numCatalogValidatedPageLabels = extractedPageLabels.filter(x => catalogPageLabels[x.pageIndex] === x.chars.map(c => c.u).join('')).length;
     }
-    return pageLabels;
   }
 
-  for (let i = 0; i < pagesCount; i++) {
-    pageLabels[i] = '-';
-  }
-
-  let allPageLabels = Object.values(extractedPageLabels).sort((a, b) => a.pageIndex - b.pageIndex);
   if (
-    catalogPageLabels
-    && catalogPageLabels.length === pagesCount
-    && (
-      allPageLabels[0] && catalogPageLabels[allPageLabels[0].pageIndex] === allPageLabels[0].chars.map(x => x.u).join('')
-      || allPageLabels.length === 0
-      || allPageLabels.length > 1
+    catalogPageLabels &&
+    catalogPageLabels.length === pagesCount &&
+    (
+      numCatalogValidatedPageLabels ||
+      !hasArabic ||
+      hasRoman
     )
   ) {
     for (let i = 0; i < pagesCount; i++) {
       pageLabels[i] = catalogPageLabels[i];
     }
-  }
-
-  let firstArabicPageLabel = Object.values(extractedPageLabels).filter(x => x.type === 'arabic')[0];
-
-  if (firstArabicPageLabel) {
+  } else if (hasArabic) {
+    // Fill page labels with placeholders
+    for (let i = 0; i < pagesCount; i++) {
+      pageLabels[i] = '-';
+    }
+    let firstArabicPageLabel = extractedPageLabels.find(x => x.type === 'arabic');
     let startInteger = firstArabicPageLabel.integer - firstArabicPageLabel.pageIndex;
     for (let i = 0; i < pagesCount; i++) {
       if (startInteger + i >= 1) {
         pageLabels[i] = (startInteger + i).toString();
       }
     }
+  } else {
+    // Return page indexes if no catalog and no extracted page labels
+    for (let i = 0; i < pagesCount; i++) {
+      pageLabels[i] = (i + 1).toString();
+    }
   }
+
   return pageLabels;
 }
 
+function validateExtractedPageLabels(labels, processedPages) {
+  if (labels.length < 2) {
+    return false;
+  }
+  for (let i = 1; i < labels.length; i++) {
+    let prevLabel = labels[i - 1];
+    let curlabel = labels[i];
+    if (
+      prevLabel.type === curlabel.type &&
+      curlabel.pageIndex - prevLabel.pageIndex !== curlabel.integer - prevLabel.integer
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function getPageLabels(pdfDocument, structuredCharsProvider) {
-  let extractedLabels = {};
-  for (let i = 0; i < 25; i++) {
+  // Max pages to process
+  const MAX_PAGES = 25;
+  let { numPages } = pdfDocument.catalog;
+
+  let extractedPageLabels = [];
+  let i = 0;
+  for (; i < MAX_PAGES; i++) {
     let pageLabel = await getPageLabel(pdfDocument, structuredCharsProvider, i);
     if (pageLabel) {
-      extractedLabels[i] = pageLabel;
+      extractedPageLabels.push(pageLabel);
     }
+  }
+
+  if (!validateExtractedPageLabels(extractedPageLabels, i)) {
+    extractedPageLabels = null;
   }
 
   let catalogPageLabels = await pdfDocument.pdfManager.ensureCatalog("pageLabels");
 
-  let pageLabels = predictPageLabels(extractedLabels, catalogPageLabels, pdfDocument.catalog.numPages)
-
+  let pageLabels = predictPageLabels(extractedPageLabels, catalogPageLabels, numPages)
   return pageLabels;
 }

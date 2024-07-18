@@ -357,25 +357,30 @@ function validateExtractedPageLabels(labels, processedPages) {
 }
 
 export async function getPageLabels(pdfDocument, structuredCharsProvider) {
-  // Max pages to process
-  const MAX_PAGES = 25;
-  let { numPages } = pdfDocument.catalog;
+  let pageLabels = [];
+  try {
+    // Max pages to process
+    const MAX_PAGES = 25;
+    let { numPages } = pdfDocument.catalog;
 
-  let extractedPageLabels = [];
-  let i = 0;
-  for (; i < MAX_PAGES; i++) {
-    let pageLabel = await getPageLabel(pdfDocument, structuredCharsProvider, i);
-    if (pageLabel) {
-      extractedPageLabels.push(pageLabel);
+    let extractedPageLabels = [];
+    let i = 0;
+    for (; i < MAX_PAGES; i++) {
+      let pageLabel = await getPageLabel(pdfDocument, structuredCharsProvider, i);
+      if (pageLabel) {
+        extractedPageLabels.push(pageLabel);
+      }
     }
+
+    if (!validateExtractedPageLabels(extractedPageLabels, i)) {
+      extractedPageLabels = null;
+    }
+
+    let catalogPageLabels = await pdfDocument.pdfManager.ensureCatalog("pageLabels");
+
+    pageLabels = predictPageLabels(extractedPageLabels, catalogPageLabels, numPages)
+  } catch (e) {
+    console.log(e);
   }
-
-  if (!validateExtractedPageLabels(extractedPageLabels, i)) {
-    extractedPageLabels = null;
-  }
-
-  let catalogPageLabels = await pdfDocument.pdfManager.ensureCatalog("pageLabels");
-
-  let pageLabels = predictPageLabels(extractedPageLabels, catalogPageLabels, numPages)
   return pageLabels;
 }

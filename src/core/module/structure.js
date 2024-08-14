@@ -940,11 +940,13 @@ export function getStructuredChars(chars) {
     let fingerprint = char.c + char.rect.join('');
     if (!fingerprints.has(fingerprint)) {
       fingerprints.add(fingerprint);
-      char.offset = chars2.length;
       chars2.push(char);
     }
   }
   let structuredChars = split(chars2);
+  for (let i = 0; i < structuredChars.length; i++) {
+    structuredChars[i].offset = i;
+  }
 
   return structuredChars;
 }
